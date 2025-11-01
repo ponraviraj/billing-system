@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Billing System
 
 A production-ready Flask-based billing system that handles product management, invoice generation, and customer purchase tracking.
@@ -229,3 +230,6 @@ For issues or questions, please refer to the code comments or contact the develo
 
 **Note**: This application follows best practices for Flask development with proper separation of concerns, database management, and template rendering.
 
+=======
+# billing-system
+>>>>>>> f88beddf16f7eff19a19e384cdf6c2fae96e1af5
