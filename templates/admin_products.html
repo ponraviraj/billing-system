@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th,
+        table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+            margin: 2px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .form-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Product Management</h1>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Product ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Tax %</th>
+                    <th>Available Stocks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product['id'] }}</td>
+                    <td>{{ product['product_id'] }}</td>
+                    <td>{{ product['name'] }}</td>
+                    <td>₹{{ "%.2f"|format(product['price']) }}</td>
+                    <td>{{ product['tax_percentage'] }}%</td>
+                    <td>{{ product['available_stocks'] }}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="editProduct({{ product['id'] }}, '{{ product['name'] }}', '{{ product['product_id'] }}', {{ product['price'] }}, {{ product['tax_percentage'] }}, {{ product['available_stocks'] }})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteProduct({{ product['id'] }})">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="form-container">
+            <h2 id="form-title">Add New Product</h2>
+            <form id="productForm">
+                <input type="hidden" id="product_id_field" name="product_id_field">
+                <div class="form-group">
+                    <label>Product ID:</label>
+                    <input type="text" id="product_id" name="product_id" required>
+                </div>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Price:</label>
+                    <input type="number" id="price" name="price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Tax Percentage:</label>
+                    <input type="number" id="tax_percentage" name="tax_percentage" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Available Stocks:</label>
+                    <input type="number" id="available_stocks" name="available_stocks" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-success">Save Product</button>
+                <button type="button" class="btn" onclick="resetForm()" style="background-color: #6c757d; color: white;">Cancel</button>
+            </form>
+        </div>
+        
+        <a href="/" class="back-link">← Back to Billing</a>
+    </div>
+    
+    <script>
+        let editingId = null;
+        
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveProduct();
+        });
+        
+        function saveProduct() {
+            const data = {
+                name: document.getElementById('name').value,
+                product_id: document.getElementById('product_id').value,
+                price: document.getElementById('price').value,
+                tax_percentage: document.getElementById('tax_percentage').value,
+                available_stocks: document.getElementById('available_stocks').value
+            };
+            
+            let url = '/admin/products/add';
+            let method = 'POST';
+            
+            if (editingId) {
+                url = '/admin/products/update/' + editingId;
+            }
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(data.message);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        }
+        
+        function editProduct(id, name, productId, price, taxPercentage, availableStocks) {
+            editingId = id;
+            document.getElementById('form-title').textContent = 'Edit Product';
+            document.getElementById('product_id').value = productId;
+            document.getElementById('product_id').readOnly = true;
+            document.getElementById('name').value = name;
+            document.getElementById('price').value = price;
+            document.getElementById('tax_percentage').value = taxPercentage;
+            document.getElementById('available_stocks').value = availableStocks;
+            document.getElementById('productForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product?')) {
+                return;
+            }
+            
+            fetch('/admin/products/delete/' + id, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert(data.message);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        }
+        
+        function resetForm() {
+            editingId = null;
+            document.getElementById('form-title').textContent = 'Add New Product';
+            document.getElementById('productForm').reset();
+            document.getElementById('product_id').readOnly = false;
+        }
+    </script>
+</body>
+</html>
+
